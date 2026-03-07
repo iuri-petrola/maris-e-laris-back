@@ -1,15 +1,19 @@
+import { prisma } from '../lib/prisma';
+
 export type ProdutoItem = {
   id: number;
   nome: string;
   imagemUrl: string;
 };
 
-export function getProdutos(): ProdutoItem[] {
-  return [
-    {
-      id: 1,
-      nome: 'Colecao destaque',
-      imagemUrl: '/assets/maris-e-laris-banner-principal.png'
-    }
-  ];
+export async function getProdutos(): Promise<ProdutoItem[]> {
+  const rows = await prisma.produto.findMany({
+    orderBy: { id: 'desc' }
+  });
+
+  return rows.map((row) => ({
+    id: row.id,
+    nome: row.nome,
+    imagemUrl: row.imagemUrl
+  }));
 }
