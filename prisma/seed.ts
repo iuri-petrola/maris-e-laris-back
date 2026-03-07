@@ -10,7 +10,7 @@ async function main() {
     data: [
       {
         nome: 'Colecao destaque',
-        imagemUrl: '/assets/maris-e-laris-banner-principal.png'
+        imagemUrl: '/files/DevOps-Pro.png'
       }
     ]
   });
