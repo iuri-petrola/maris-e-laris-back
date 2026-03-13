@@ -1,4 +1,6 @@
+import bcrypt from 'bcryptjs';
 import jwt, { type Secret, type SignOptions } from 'jsonwebtoken';
+import { prisma } from '../lib/prisma';
 
 type LoginInput = {
   username: string;
@@ -10,29 +12,37 @@ type LoginResult = {
   username: string;
 };
 
-export function loginAdmin(input: LoginInput): LoginResult | null {
-  const adminUsername = process.env.ADMIN_USERNAME;
-  const adminPassword = process.env.ADMIN_PASSWORD;
+export async function loginAdmin(input: LoginInput): Promise<LoginResult | null> {
   const jwtSecret = process.env.JWT_SECRET;
   const tokenExpiresIn = process.env.TOKEN_EXPIRES_IN || '8h';
 
-  if (!adminUsername || !adminPassword || !jwtSecret) {
-    throw new Error('Variaveis ADMIN_USERNAME, ADMIN_PASSWORD e JWT_SECRET sao obrigatorias.');
+  if (!jwtSecret) {
+    throw new Error('Variavel JWT_SECRET e obrigatoria.');
   }
 
-  if (input.username !== adminUsername || input.password !== adminPassword) {
+  const adminUser = await prisma.adminUser.findUnique({
+    where: { username: input.username }
+  });
+
+  if (!adminUser || !adminUser.ativo) {
+    return null;
+  }
+
+  const passwordMatches = await bcrypt.compare(input.password, adminUser.passwordHash);
+
+  if (!passwordMatches) {
     return null;
   }
 
   const token = jwt.sign(
-    { sub: adminUsername, role: 'admin' },
+    { sub: adminUser.username, role: 'admin' },
     jwtSecret as Secret,
     { expiresIn: tokenExpiresIn } as SignOptions
   );
 
   return {
     token,
-    username: adminUsername
+    username: adminUser.username
   };
 }
 

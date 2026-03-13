@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { loginAdmin } from '../services/authService';
 
-export function adminLogin(req: Request, res: Response) {
+export async function adminLogin(req: Request, res: Response) {
   const { username, password } = req.body as { username?: string; password?: string };
 
   if (!username || !password) {
@@ -9,7 +9,7 @@ export function adminLogin(req: Request, res: Response) {
   }
 
   try {
-    const result = loginAdmin({ username: username.trim(), password });
+    const result = await loginAdmin({ username: username.trim(), password });
 
     if (!result) {
       return res.status(401).json({ error: 'Credenciais invalidas' });
