@@ -11,6 +11,7 @@ model Produto {
   id        Int      @id @default(autoincrement())
   nome      String
   imagemUrl String
+  ativo     Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
