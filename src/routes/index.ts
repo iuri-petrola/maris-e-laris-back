@@ -18,7 +18,17 @@ router.get('/health', health);
 router.post('/admin/login', adminLogin);
 router.get('/admin/produtos', requireAdminAuth, listAdminProdutos);
 router.get('/produtos', listProdutos);
-router.post('/produtos', requireAdminAuth, uploadProduto.single('image'), createProdutoItem);
-router.put('/produtos/:id', requireAdminAuth, uploadProduto.single('image'), updateProdutoItem);
+router.post(
+  '/produtos',
+  requireAdminAuth,
+  uploadProduto.fields([{ name: 'image', maxCount: 1 }]),
+  createProdutoItem
+);
+router.put(
+  '/produtos/:id',
+  requireAdminAuth,
+  uploadProduto.fields([{ name: 'image', maxCount: 1 }]),
+  updateProdutoItem
+);
 router.delete('/produtos/:id', requireAdminAuth, deleteProdutoItem);
 router.patch('/produtos/:id/reactivate', requireAdminAuth, reactivateProdutoItem);

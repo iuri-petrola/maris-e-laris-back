@@ -10,6 +10,16 @@ import {
   updateProduto
 } from '../services/produtoService';
 
+type UploadedFile = {
+  filename: string;
+};
+
+type ProdutoFilesRequest = Request & {
+  files?: {
+    image?: UploadedFile[];
+  };
+};
+
 function normalizeImagemUrl(req: Request, imageUrl: string): string {
   const host = `${req.protocol}://${req.get('host')}`;
   return imageUrl.startsWith('/') ? `${host}${imageUrl}` : imageUrl;
@@ -121,17 +131,25 @@ export async function listAdminProdutos(req: Request, res: Response) {
 }
 
 export async function createProdutoItem(req: Request, res: Response) {
-  const { nome } = req.body as { nome?: string };
-  const file = (req as Request & { file?: { filename: string } }).file;
+  const { nome, videoUrl } = req.body as {
+    nome?: string;
+    videoUrl?: string;
+  };
+  const files = (req as ProdutoFilesRequest).files;
+  const imageFile = files?.image?.[0];
 
-  if (!nome || !file) {
+  if (!nome || !imageFile) {
     return res.status(400).json({ error: 'Campos obrigatorios: nome, image(file)' });
   }
 
   try {
     const filesPublicPath = process.env.FILES_PUBLIC_PATH || '/files';
-    const imagemUrl = `${filesPublicPath}/produtos/${file.filename}`;
-    const created = await createProduto({ nome: nome.trim(), imagemUrl });
+    const imagePublicUrl = `${filesPublicPath}/produtos/${imageFile.filename}`;
+    const created = await createProduto({
+      nome: nome.trim(),
+      imagemUrl: imagePublicUrl,
+      videoUrl: videoUrl?.trim() || null
+    });
     return res.status(201).json({
       ...created,
       imagemUrl: normalizeImagemUrl(req, created.imagemUrl)
@@ -143,15 +161,19 @@ export async function createProdutoItem(req: Request, res: Response) {
 
 export async function updateProdutoItem(req: Request, res: Response) {
   const id = Number(req.params.id);
-  const { nome } = req.body as { nome?: string };
-  const file = (req as Request & { file?: { filename: string } }).file;
+  const { nome, videoUrl } = req.body as {
+    nome?: string;
+    videoUrl?: string;
+  };
+  const files = (req as ProdutoFilesRequest).files;
+  const imageFile = files?.image?.[0];
 
   if (Number.isNaN(id)) {
     return res.status(400).json({ error: 'ID invalido' });
   }
 
-  if (!nome?.trim() && !file) {
-    return res.status(400).json({ error: 'Informe nome e/ou uma nova imagem' });
+  if (!nome?.trim() && !imageFile && videoUrl === undefined) {
+    return res.status(400).json({ error: 'Informe nome e/ou novo arquivo de imagem/link' });
   }
 
   try {
@@ -162,19 +184,26 @@ export async function updateProdutoItem(req: Request, res: Response) {
     }
 
     const filesPublicPath = process.env.FILES_PUBLIC_PATH || '/files';
-    const imagemUrl = file ? `${filesPublicPath}/produtos/${file.filename}` : undefined;
+    const imagePublicUrl = imageFile
+      ? `${filesPublicPath}/produtos/${imageFile.filename}`
+      : undefined;
+
+    const normalizedVideoUrl = videoUrl !== undefined ? videoUrl.trim() || null : undefined;
 
     const updated = await updateProduto(id, {
       nome: nome?.trim() || undefined,
-      imagemUrl
+      imagemUrl: imagePublicUrl,
+      videoUrl: normalizedVideoUrl
     });
 
     if (!updated) {
       return res.status(404).json({ error: 'Produto nao encontrado' });
     }
 
-    if (file && existing.imagemUrl !== updated.imagemUrl) {
-      deleteFileIfExists(existing.imagemUrl);
+    if (imageFile) {
+      if (existing.imagemUrl && existing.imagemUrl !== updated.imagemUrl) {
+        deleteFileIfExists(existing.imagemUrl);
+      }
     }
 
     return res.json({

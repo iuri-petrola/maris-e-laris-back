@@ -4,12 +4,14 @@ export type ProdutoItem = {
   id: number;
   nome: string;
   imagemUrl: string;
+  videoUrl: string | null;
   ativo: boolean;
 };
 
 type ProdutoInput = {
   nome: string;
   imagemUrl: string;
+  videoUrl?: string | null;
 };
 
 export async function getProdutos(includeInactive = false): Promise<ProdutoItem[]> {
@@ -22,6 +24,7 @@ export async function getProdutos(includeInactive = false): Promise<ProdutoItem[
     id: row.id,
     nome: row.nome,
     imagemUrl: row.imagemUrl,
+    videoUrl: row.videoUrl,
     ativo: row.ativo
   }));
 }
@@ -31,6 +34,7 @@ export async function createProduto(input: ProdutoInput): Promise<ProdutoItem> {
     data: {
       nome: input.nome,
       imagemUrl: input.imagemUrl,
+      videoUrl: input.videoUrl ?? null,
       ativo: true
     }
   });
@@ -39,6 +43,7 @@ export async function createProduto(input: ProdutoInput): Promise<ProdutoItem> {
     id: created.id,
     nome: created.nome,
     imagemUrl: created.imagemUrl,
+    videoUrl: created.videoUrl,
     ativo: created.ativo
   };
 }
@@ -56,6 +61,7 @@ export async function getProdutoById(id: number): Promise<ProdutoItem | null> {
     id: row.id,
     nome: row.nome,
     imagemUrl: row.imagemUrl,
+    videoUrl: row.videoUrl,
     ativo: row.ativo
   };
 }
@@ -76,7 +82,8 @@ export async function updateProduto(
     where: { id },
     data: {
       nome: input.nome ?? existing.nome,
-      imagemUrl: input.imagemUrl ?? existing.imagemUrl
+      imagemUrl: input.imagemUrl ?? existing.imagemUrl,
+      videoUrl: input.videoUrl !== undefined ? input.videoUrl : existing.videoUrl
     }
   });
 
@@ -84,6 +91,7 @@ export async function updateProduto(
     id: updated.id,
     nome: updated.nome,
     imagemUrl: updated.imagemUrl,
+    videoUrl: updated.videoUrl,
     ativo: updated.ativo
   };
 }
@@ -109,6 +117,7 @@ export async function deactivateProduto(id: number, imagemUrl: string): Promise<
     id: updated.id,
     nome: updated.nome,
     imagemUrl: updated.imagemUrl,
+    videoUrl: updated.videoUrl,
     ativo: updated.ativo
   };
 }
@@ -134,6 +143,7 @@ export async function reactivateProduto(id: number, imagemUrl: string): Promise<
     id: updated.id,
     nome: updated.nome,
     imagemUrl: updated.imagemUrl,
+    videoUrl: updated.videoUrl,
     ativo: updated.ativo
   };
 }
