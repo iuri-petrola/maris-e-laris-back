@@ -131,15 +131,18 @@ export async function listAdminProdutos(req: Request, res: Response) {
 }
 
 export async function createProdutoItem(req: Request, res: Response) {
-  const { nome, videoUrl } = req.body as {
+  const { nome, preco, videoUrl } = req.body as {
     nome?: string;
+    preco?: string;
     videoUrl?: string;
   };
   const files = (req as ProdutoFilesRequest).files;
   const imageFile = files?.image?.[0];
 
-  if (!nome || !imageFile) {
-    return res.status(400).json({ error: 'Campos obrigatorios: nome, image(file)' });
+  const normalizedPreco = preco ? Number(preco) : NaN;
+
+  if (!nome || !imageFile || Number.isNaN(normalizedPreco)) {
+    return res.status(400).json({ error: 'Campos obrigatorios: nome, preco, image(file)' });
   }
 
   try {
@@ -147,6 +150,7 @@ export async function createProdutoItem(req: Request, res: Response) {
     const imagePublicUrl = `${filesPublicPath}/produtos/${imageFile.filename}`;
     const created = await createProduto({
       nome: nome.trim(),
+      preco: normalizedPreco,
       imagemUrl: imagePublicUrl,
       videoUrl: videoUrl?.trim() || null
     });
@@ -161,8 +165,9 @@ export async function createProdutoItem(req: Request, res: Response) {
 
 export async function updateProdutoItem(req: Request, res: Response) {
   const id = Number(req.params.id);
-  const { nome, videoUrl } = req.body as {
+  const { nome, preco, videoUrl } = req.body as {
     nome?: string;
+    preco?: string;
     videoUrl?: string;
   };
   const files = (req as ProdutoFilesRequest).files;
@@ -172,8 +177,8 @@ export async function updateProdutoItem(req: Request, res: Response) {
     return res.status(400).json({ error: 'ID invalido' });
   }
 
-  if (!nome?.trim() && !imageFile && videoUrl === undefined) {
-    return res.status(400).json({ error: 'Informe nome e/ou novo arquivo de imagem/link' });
+  if (!nome?.trim() && !imageFile && videoUrl === undefined && preco === undefined) {
+    return res.status(400).json({ error: 'Informe nome, preco e/ou novo arquivo de imagem/link' });
   }
 
   try {
@@ -189,9 +194,15 @@ export async function updateProdutoItem(req: Request, res: Response) {
       : undefined;
 
     const normalizedVideoUrl = videoUrl !== undefined ? videoUrl.trim() || null : undefined;
+    const normalizedPreco = preco !== undefined ? Number(preco) : undefined;
+
+    if (normalizedPreco !== undefined && Number.isNaN(normalizedPreco)) {
+      return res.status(400).json({ error: 'Preco invalido' });
+    }
 
     const updated = await updateProduto(id, {
       nome: nome?.trim() || undefined,
+      preco: normalizedPreco,
       imagemUrl: imagePublicUrl,
       videoUrl: normalizedVideoUrl
     });

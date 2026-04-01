@@ -10,6 +10,7 @@ datasource db {
 model Produto {
   id        Int      @id @default(autoincrement())
   nome      String
+  preco     Decimal  @default(0) @db.Decimal(10, 2)
   imagemUrl String
   videoUrl  String?
   ativo     Boolean  @default(true)
