@@ -1,6 +1,7 @@
 import { Router } from 'express';
-import { adminLogin } from '../controllers/authController';
+import { adminLogin, clientLogin } from '../controllers/authController';
 import { health } from '../controllers/healthController';
+import { registerClientUser } from '../controllers/clientUserController';
 import {
   createProdutoItem,
   deleteProdutoItem,
@@ -16,6 +17,8 @@ export const router = Router();
 
 router.get('/health', health);
 router.post('/admin/login', adminLogin);
+router.post('/client/login', clientLogin);
+router.post('/client-users/register', registerClientUser);
 router.get('/admin/produtos', requireAdminAuth, listAdminProdutos);
 router.get('/produtos', listProdutos);
 router.post(

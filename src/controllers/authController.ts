@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { loginAdmin } from '../services/authService';
+import { loginAdmin, loginClient } from '../services/authService';
 
 export async function adminLogin(req: Request, res: Response) {
   const { username, password } = req.body as { username?: string; password?: string };
@@ -10,6 +10,28 @@ export async function adminLogin(req: Request, res: Response) {
 
   try {
     const result = await loginAdmin({ username: username.trim(), password });
+
+    if (!result) {
+      return res.status(401).json({ error: 'Credenciais invalidas' });
+    }
+
+    return res.json(result);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Erro ao realizar login';
+    return res.status(500).json({ error: message });
+  }
+}
+
+
+export async function clientLogin(req: Request, res: Response) {
+  const { nome, password } = req.body as { nome?: string; password?: string };
+
+  if (!nome || !password) {
+    return res.status(400).json({ error: 'Campos obrigatorios: nome, password' });
+  }
+
+  try {
+    const result = await loginClient({ nome: nome.trim(), password });
 
     if (!result) {
       return res.status(401).json({ error: 'Credenciais invalidas' });

@@ -30,3 +30,17 @@ model AdminUser {
 
   @@map("admin_users")
 }
+
+
+model ClientUser {
+  id           Int      @id @default(autoincrement())
+  nome         String   @unique
+  email        String   @unique
+  whatsapp     String
+  passwordHash String
+  ativo        Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("client_users")
+}
