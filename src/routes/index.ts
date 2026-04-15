@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { adminLogin, clientLogin } from '../controllers/authController';
 import { health } from '../controllers/healthController';
-import { registerClientUser } from '../controllers/clientUserController';
+import { getClientMe, registerClientUser } from '../controllers/clientUserController';
 import {
   createProdutoItem,
   deleteProdutoItem,
@@ -11,13 +11,14 @@ import {
   updateProdutoItem
 } from '../controllers/produtoController';
 import { uploadProduto } from '../lib/uploadProduto';
-import { requireAdminAuth } from '../middlewares/authMiddleware';
+import { requireAdminAuth, requireClientAuth } from '../middlewares/authMiddleware';
 
 export const router = Router();
 
 router.get('/health', health);
 router.post('/admin/login', adminLogin);
 router.post('/client/login', clientLogin);
+router.get('/client/me', requireClientAuth, getClientMe);
 router.post('/client-users/register', registerClientUser);
 router.get('/admin/produtos', requireAdminAuth, listAdminProdutos);
 router.get('/produtos', listProdutos);

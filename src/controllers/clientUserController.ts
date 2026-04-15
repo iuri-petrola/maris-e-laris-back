@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
-import { createClientUser, getClientUserByEmail, getClientUserByNome } from '../services/clientUserService';
+import {
+  createClientUser,
+  getClientUserByEmail,
+  getClientUserByNome,
+  getClientUserProfileByNome
+} from '../services/clientUserService';
 
 const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -55,6 +60,28 @@ export async function registerClientUser(req: Request, res: Response) {
     }
 
     const message = error instanceof Error ? error.message : 'Erro ao cadastrar cliente';
+    return res.status(500).json({ error: message });
+  }
+}
+
+
+export async function getClientMe(req: Request, res: Response) {
+  try {
+    const nome = (req as Request & { clientNome?: string }).clientNome;
+
+    if (!nome) {
+      return res.status(401).json({ error: 'Token invalido' });
+    }
+
+    const clientUser = await getClientUserProfileByNome(nome);
+
+    if (!clientUser || !clientUser.ativo) {
+      return res.status(404).json({ error: 'Cliente nao encontrado' });
+    }
+
+    return res.json(clientUser);
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Erro ao carregar area do cliente';
     return res.status(500).json({ error: message });
   }
 }

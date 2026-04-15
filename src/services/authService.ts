@@ -100,3 +100,14 @@ export async function loginClient(input: ClientLoginInput): Promise<ClientLoginR
     nome: clientUser.nome
   };
 }
+
+
+export function verifyClientToken(token: string) {
+  const jwtSecret = process.env.JWT_SECRET;
+
+  if (!jwtSecret) {
+    throw new Error('Variavel JWT_SECRET nao configurada.');
+  }
+
+  return jwt.verify(token, jwtSecret as Secret) as { sub?: string; role?: string };
+}

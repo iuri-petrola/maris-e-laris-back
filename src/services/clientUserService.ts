@@ -66,3 +66,12 @@ export async function getClientUserByNome(nome: string): Promise<ClientUserItem 
 
   return row ? mapClientUser(row) : null;
 }
+
+
+export async function getClientUserProfileByNome(nome: string): Promise<ClientUserItem | null> {
+  const row = await prisma.clientUser.findUnique({
+    where: { nome }
+  });
+
+  return row ? mapClientUser(row) : null;
+}
