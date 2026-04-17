@@ -8,14 +8,15 @@ datasource db {
 }
 
 model Produto {
-  id        Int      @id @default(autoincrement())
+  id        Int        @id @default(autoincrement())
   nome      String
-  preco     Decimal  @default(0) @db.Decimal(10, 2)
+  preco     Decimal    @default(0) @db.Decimal(10, 2)
   imagemUrl String
   videoUrl  String?
-  ativo     Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  ativo     Boolean    @default(true)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  cartItems CartItem[]
 
   @@map("produtos")
 }
@@ -33,14 +34,29 @@ model AdminUser {
 
 
 model ClientUser {
-  id           Int      @id @default(autoincrement())
-  nome         String   @unique
-  email        String   @unique
+  id           Int        @id @default(autoincrement())
+  nome         String     @unique
+  email        String     @unique
   whatsapp     String
   passwordHash String
-  ativo        Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  ativo        Boolean    @default(true)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  cartItems    CartItem[]
 
   @@map("client_users")
+}
+
+model CartItem {
+  id           Int        @id @default(autoincrement())
+  quantidade   Int        @default(1)
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  clientUserId Int
+  produtoId    Int
+  clientUser   ClientUser @relation(fields: [clientUserId], references: [id], onDelete: Cascade)
+  produto      Produto    @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@unique([clientUserId, produtoId])
+  @@map("cart_items")
 }

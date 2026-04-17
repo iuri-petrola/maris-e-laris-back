@@ -3,6 +3,12 @@ import { adminLogin, clientLogin } from '../controllers/authController';
 import { health } from '../controllers/healthController';
 import { getClientMe, registerClientUser } from '../controllers/clientUserController';
 import {
+  createClientCartItem,
+  deleteClientCartItem,
+  getClientCart,
+  updateClientCartItem
+} from '../controllers/cartController';
+import {
   createProdutoItem,
   deleteProdutoItem,
   listAdminProdutos,
@@ -19,6 +25,10 @@ router.get('/health', health);
 router.post('/admin/login', adminLogin);
 router.post('/client/login', clientLogin);
 router.get('/client/me', requireClientAuth, getClientMe);
+router.get('/client/cart', requireClientAuth, getClientCart);
+router.post('/client/cart/items', requireClientAuth, createClientCartItem);
+router.patch('/client/cart/items/:id', requireClientAuth, updateClientCartItem);
+router.delete('/client/cart/items/:id', requireClientAuth, deleteClientCartItem);
 router.post('/client-users/register', registerClientUser);
 router.get('/admin/produtos', requireAdminAuth, listAdminProdutos);
 router.get('/produtos', listProdutos);
