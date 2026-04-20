@@ -8,15 +8,15 @@ datasource db {
 }
 
 model Produto {
-  id        Int        @id @default(autoincrement())
-  nome      String
-  preco     Decimal    @default(0) @db.Decimal(10, 2)
-  imagemUrl String
-  videoUrl  String?
-  ativo     Boolean    @default(true)
-  createdAt DateTime   @default(now())
-  updatedAt DateTime   @updatedAt
-  cartItems CartItem[]
+  id          Int          @id @default(autoincrement())
+  nome        String
+  preco       Decimal      @default(0) @db.Decimal(10, 2)
+  imagemUrl   String
+  videoUrl    String?
+  ativo       Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  pedidoItems PedidoItem[]
 
   @@map("produtos")
 }
@@ -32,31 +32,42 @@ model AdminUser {
   @@map("admin_users")
 }
 
-
 model ClientUser {
-  id           Int        @id @default(autoincrement())
-  nome         String     @unique
-  email        String     @unique
-  whatsapp     String
-  passwordHash String
-  ativo        Boolean    @default(true)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
-  cartItems    CartItem[]
+  id        Int      @id @default(autoincrement())
+  nome      String   @unique
+  contato   String
+  ativo     Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  pedidos   Pedido[]
 
   @@map("client_users")
 }
 
-model CartItem {
-  id           Int        @id @default(autoincrement())
-  quantidade   Int        @default(1)
-  createdAt    DateTime   @default(now())
-  updatedAt    DateTime   @updatedAt
+model Pedido {
+  id           Int         @id @default(autoincrement())
+  numero       String      @unique
+  contato      String
+  status       String      @default("PENDENTE_DE_ENVIO")
   clientUserId Int
-  produtoId    Int
-  clientUser   ClientUser @relation(fields: [clientUserId], references: [id], onDelete: Cascade)
-  produto      Produto    @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  clientUser   ClientUser  @relation(fields: [clientUserId], references: [id], onDelete: Cascade)
+  itens        PedidoItem[]
 
-  @@unique([clientUserId, produtoId])
-  @@map("cart_items")
+  @@map("pedidos")
+}
+
+model PedidoItem {
+  id        Int      @id @default(autoincrement())
+  pedidoId   Int
+  produtoId  Int
+  quantidade Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  pedido     Pedido   @relation(fields: [pedidoId], references: [id], onDelete: Cascade)
+  produto    Produto  @relation(fields: [produtoId], references: [id], onDelete: Restrict)
+
+  @@unique([pedidoId, produtoId])
+  @@map("pedido_items")
 }

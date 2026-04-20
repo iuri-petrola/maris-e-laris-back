@@ -53,6 +53,18 @@ async function getClientByNome(nome: string) {
   });
 }
 
+async function getOpenPedido(clientUserId: number) {
+  return prisma.pedido.findFirst({
+    where: {
+      clientUserId,
+      status: 'PENDENTE_DE_ENVIO'
+    },
+    orderBy: {
+      createdAt: 'desc'
+    }
+  });
+}
+
 export async function getCartSummary(nome: string): Promise<CartSummary | null> {
   const client = await getClientByNome(nome);
 
@@ -60,8 +72,14 @@ export async function getCartSummary(nome: string): Promise<CartSummary | null> 
     return null;
   }
 
-  const rows = await prisma.cartItem.findMany({
-    where: { clientUserId: client.id },
+  const pedido = await getOpenPedido(client.id);
+
+  if (!pedido) {
+    return { items: [], total: 0 };
+  }
+
+  const rows = await prisma.pedidoItem.findMany({
+    where: { pedidoId: pedido.id },
     include: {
       produto: true
     },
@@ -91,26 +109,39 @@ export async function addCartItem(nome: string, produtoId: number, quantidade: n
     throw new Error('Produto nao encontrado');
   }
 
-  const existing = await prisma.cartItem.findUnique({
+  let pedido = await getOpenPedido(client.id);
+
+  if (!pedido) {
+    pedido = await prisma.pedido.create({
+      data: {
+        numero: `PED-${Date.now()}`,
+        contato: client.contato,
+        status: 'PENDENTE_DE_ENVIO',
+        clientUserId: client.id
+      }
+    });
+  }
+
+  const existing = await prisma.pedidoItem.findUnique({
     where: {
-      clientUserId_produtoId: {
-        clientUserId: client.id,
+      pedidoId_produtoId: {
+        pedidoId: pedido.id,
         produtoId
       }
     }
   });
 
   if (existing) {
-    await prisma.cartItem.update({
+    await prisma.pedidoItem.update({
       where: { id: existing.id },
       data: {
         quantidade: existing.quantidade + quantidade
       }
     });
   } else {
-    await prisma.cartItem.create({
+    await prisma.pedidoItem.create({
       data: {
-        clientUserId: client.id,
+        pedidoId: pedido.id,
         produtoId,
         quantidade
       }
@@ -127,10 +158,16 @@ export async function updateCartItem(nome: string, itemId: number, quantidade: n
     return null;
   }
 
-  const item = await prisma.cartItem.findFirst({
+  const pedido = await getOpenPedido(client.id);
+
+  if (!pedido) {
+    throw new Error('Item do carrinho nao encontrado');
+  }
+
+  const item = await prisma.pedidoItem.findFirst({
     where: {
       id: itemId,
-      clientUserId: client.id
+      pedidoId: pedido.id
     }
   });
 
@@ -138,7 +175,7 @@ export async function updateCartItem(nome: string, itemId: number, quantidade: n
     throw new Error('Item do carrinho nao encontrado');
   }
 
-  await prisma.cartItem.update({
+  await prisma.pedidoItem.update({
     where: { id: item.id },
     data: { quantidade }
   });
@@ -153,10 +190,16 @@ export async function removeCartItem(nome: string, itemId: number): Promise<Cart
     return null;
   }
 
-  const item = await prisma.cartItem.findFirst({
+  const pedido = await getOpenPedido(client.id);
+
+  if (!pedido) {
+    throw new Error('Item do carrinho nao encontrado');
+  }
+
+  const item = await prisma.pedidoItem.findFirst({
     where: {
       id: itemId,
-      clientUserId: client.id
+      pedidoId: pedido.id
     }
   });
 
@@ -164,9 +207,17 @@ export async function removeCartItem(nome: string, itemId: number): Promise<Cart
     throw new Error('Item do carrinho nao encontrado');
   }
 
-  await prisma.cartItem.delete({
+  await prisma.pedidoItem.delete({
     where: { id: item.id }
   });
+
+  const remainingItems = await prisma.pedidoItem.count({
+    where: { pedidoId: pedido.id }
+  });
+
+  if (remainingItems === 0) {
+    await prisma.pedido.delete({ where: { id: pedido.id } });
+  }
 
   return getCartSummary(nome);
 }
